@@ -8,9 +8,6 @@ export class User {
   name: string;
   @Column({ type: 'varchar', length: 256 })
   gmail: string;
-  constructor(id: string, name: string, gmail: string) {
-    this.gmail = gmail;
-    this.id = id;
-    this.name = name;
-  }
+  @Column({ type: 'varchar', length: 256 })
+  password: string;
 }
