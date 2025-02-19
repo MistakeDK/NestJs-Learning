@@ -1,5 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import * as bcrypy from 'bcrypt';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -10,4 +16,9 @@ export class User {
   gmail: string;
   @Column({ type: 'varchar', length: 256 })
   password: string;
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPasswordCreate() {
+    this.password = await bcrypy.hash(this.password, 10);
+  }
 }
