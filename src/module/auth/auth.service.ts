@@ -1,21 +1,22 @@
 import { LoginDTO } from './dto/login.dto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/module/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { generateUUID } from 'src/utils/commom';
 import { CustomException } from 'src/http-exception-fillter/customException';
 import { ErrorCode } from 'src/config/constantError';
+import { ResponseLoginDTO } from './dto/response-login.dto';
+import { plainToInstance } from 'class-transformer';
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
-  async login(loginData: LoginDTO) {
+  async login(loginData: LoginDTO): Promise<ResponseLoginDTO> {
     const user = await this.userRepository.findOne({
       where: {
         gmail: loginData.gmail,
@@ -29,13 +30,13 @@ export class AuthService {
       const payload = {
         gmail: loginData.gmail,
       };
-
-      return await this.jwtService.signAsync(payload, {
+      const token = await this.jwtService.signAsync(payload, {
         jwtid: generateUUID(),
         expiresIn: 600,
       });
+      return plainToInstance(ResponseLoginDTO, { token });
     } else {
-      return 'login fail';
+      throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);
     }
   }
 }

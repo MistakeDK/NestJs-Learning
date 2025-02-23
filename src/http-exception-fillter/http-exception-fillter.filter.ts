@@ -9,6 +9,7 @@ import { Request, Response } from 'express';
 interface IResponseError {
   status: HttpStatus;
   message: string;
+  timestamp: string;
 }
 
 @Catch(CustomException)
@@ -18,10 +19,11 @@ export class HttpExceptionFillterFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     const status = exception.getStatus();
-    response.status(status).json({
-      statusCode: status,
+    const error: IResponseError = {
       message: exception.message,
+      status: status,
       timestamp: new Date().toISOString(),
-    });
+    };
+    response.status(status).json(error);
   }
 }
