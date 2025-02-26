@@ -14,6 +14,8 @@ import { AuthModule } from './module/auth/auth.module';
 import { AuthMiddleware } from './module/auth/auth.middleware';
 import { UsersService } from './module/users/users.service';
 import { CommomModule } from './module/commom/commom.module';
+import { RoleModule } from './module/role/role.module';
+import { PermissionModule } from './module/permission/permission.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { CommomModule } from './module/commom/commom.module';
     }),
     UsersModule,
     AuthModule,
+    RoleModule,
+    PermissionModule,
     CommomModule,
   ],
   providers: [AppService],
