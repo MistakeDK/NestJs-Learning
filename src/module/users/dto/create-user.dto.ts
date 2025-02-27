@@ -9,7 +9,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   gmail: string;
   @IsNotEmpty()
-  @MinLength(10, {
+  @MinLength(6, {
     message: (validationArguments) => {
       throw new CustomException(
         ErrorCode.PASSWORD_TOO_SHORT,

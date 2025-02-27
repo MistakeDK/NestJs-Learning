@@ -10,10 +10,19 @@ import { CustomException } from 'src/http-exception-fillter/customException';
 import { ErrorCode } from 'src/config/constantError';
 import { ResponseLoginDTO } from './dto/response-login.dto';
 import { plainToInstance } from 'class-transformer';
+import { Role } from '../role/entities/role.entity';
+import { ePermission } from 'src/config/permission.enum';
+
+export interface IPayload {
+  gmail: string;
+  permission: ePermission[];
+}
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
+
     private jwtService: JwtService,
   ) {}
   async login(loginData: LoginDTO): Promise<ResponseLoginDTO> {
@@ -21,19 +30,27 @@ export class AuthService {
       where: {
         gmail: loginData.gmail,
       },
+      relations: ['roles', 'roles.permissions'],
     });
     if (!user) {
       throw new CustomException(ErrorCode.USER_NOT_EXIST);
     }
     const isMatch = await bcrypt.compare(loginData.password, user?.password);
+
+    const permissions = user.roles
+      .flatMap((role) => role.permissions)
+      .map((permission) => permission.permission);
+
     if (isMatch) {
       const payload = {
         gmail: loginData.gmail,
+        permission: permissions,
       };
       const token = await this.jwtService.signAsync(payload, {
         jwtid: generateUUID(),
         expiresIn: 600,
       });
+
       return plainToInstance(ResponseLoginDTO, { token });
     } else {
       throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);

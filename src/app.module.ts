@@ -8,11 +8,8 @@ import { AppService } from './app.service';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './module/users/users.module';
-import { UsersController } from './module/users/users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './module/auth/auth.module';
-import { AuthMiddleware } from './module/auth/auth.middleware';
-import { UsersService } from './module/users/users.service';
 import { CommomModule } from './module/commom/commom.module';
 import { RoleModule } from './module/role/role.module';
 import { PermissionModule } from './module/permission/permission.module';
@@ -46,15 +43,4 @@ import { PermissionModule } from './module/permission/permission.module';
   ],
   providers: [AppService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .exclude(
-        { path: 'users', method: RequestMethod.PATCH },
-        { path: 'users', method: RequestMethod.POST },
-        'auth',
-      )
-      .forRoutes('*');
-  }
-}
+export class AppModule {}
