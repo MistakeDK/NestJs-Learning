@@ -19,9 +19,10 @@ export class AuthorizationGuard implements CanActivate {
     if (!requiredPermission) {
       return true;
     }
-
     const { user } = context.switchToHttp().getRequest();
-
+    if ((user as IPayload).permission.includes(ePermission.SUPER_ADMIN)) {
+      return true;
+    }
     if ((user as IPayload).permission.length === 0) {
       return false;
     }

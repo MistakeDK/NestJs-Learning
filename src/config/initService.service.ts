@@ -1,28 +1,28 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcrypt';
 import { Permission } from 'src/module/permission/entities/permission.entity';
 import { Role } from 'src/module/role/entities/role.entity';
 import { User } from 'src/module/users/entities/user.entity';
+import { Repository } from 'typeorm';
 import { ePermission } from './permission.enum';
 
 @Injectable()
 export class InitService implements OnApplicationBootstrap {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(Role) private roleRepository: Repository<Role>,
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     @InjectRepository(Permission)
-    private permissionRepository: Repository<Permission>,
+    private readonly permissionRepository: Repository<Permission>,
   ) {}
 
   async onApplicationBootstrap() {
-    console.log('🚀 Chạy SeedService để tạo dữ liệu mặc định...');
-    await this.createDefaultUserAndRole();
+    console.log('🚀 Chạy InitService để tạo dữ liệu mặc định...');
+    await this.createDefaultRoleAndPermissions();
+    await this.createDefaultAdminUser();
+    console.log('🎉 Seed dữ liệu hoàn tất!');
   }
 
-  private async createDefaultUserAndRole() {
-    // 1️⃣ Kiểm tra xem role "Admin" đã tồn tại chưa
+  private async createDefaultRoleAndPermissions() {
     let adminRole = await this.roleRepository.findOne({
       where: { name: 'Admin' },
       relations: ['permissions'],
@@ -30,33 +30,36 @@ export class InitService implements OnApplicationBootstrap {
 
     if (!adminRole) {
       adminRole = this.roleRepository.create({ name: 'Admin' });
-      await this.roleRepository.save(adminRole);
+      adminRole = await this.roleRepository.save(adminRole);
       console.log('✅ Role Admin đã được tạo');
     }
 
-    // 2️⃣ Kiểm tra và tạo tất cả permission từ enum
-    const existingPermissions = await this.permissionRepository.find();
-    const allPermissions = Object.values(ePermission);
+    // Kiểm tra nếu quyền SUPER_ADMIN đã tồn tại trong Role Admin chưa
+    const hasSuperAdminPermission = await this.permissionRepository.findOne({
+      where: {
+        permission: ePermission.SUPER_ADMIN,
+        role: { id: adminRole.id },
+      },
+    });
 
-    if (existingPermissions.length < allPermissions.length) {
-      const newPermissions = allPermissions
-        .filter(
-          (perm) => !existingPermissions.some((p) => p.permission === perm),
-        )
-        .map((perm) => {
-          const newPermission = new Permission();
-          newPermission.permission = perm as ePermission;
-          newPermission.role = adminRole;
-          return newPermission;
-        });
-      await this.permissionRepository.save(newPermissions);
-      console.log('✅ Tất cả permission đã được tạo và gán vào role Admin');
+    if (!hasSuperAdminPermission) {
+      const permissionSuperAdmin = this.permissionRepository.create({
+        permission: ePermission.SUPER_ADMIN,
+        role: adminRole,
+      });
+      await this.permissionRepository.save(permissionSuperAdmin);
+      console.log('✅ Permission SUPER_ADMIN đã được gán cho Role Admin');
     }
+  }
 
-    // 3️⃣ Kiểm tra xem user admin có tồn tại không
+  private async createDefaultAdminUser() {
     let adminUser = await this.userRepository.findOne({
       where: { gmail: 'admin@gmail.com' },
       relations: ['roles'],
+    });
+
+    const adminRole = await this.roleRepository.findOne({
+      where: { name: 'Admin' },
     });
 
     if (!adminUser) {
@@ -64,20 +67,14 @@ export class InitService implements OnApplicationBootstrap {
         name: 'Admin',
         gmail: 'admin@gmail.com',
         password: '123456',
-        roles: [adminRole], // Gán role Admin cho user này
+        roles: [adminRole as Role],
       });
-
       await this.userRepository.save(adminUser);
       console.log('✅ User Admin đã được tạo');
-    } else {
-      // Nếu user đã có nhưng chưa có role Admin, thêm vào
-      if (!adminUser.roles.some((role) => role.id === adminRole.id)) {
-        adminUser.roles.push(adminRole);
-        await this.userRepository.save(adminUser);
-        console.log('✅ User Admin đã được gán thêm role Admin');
-      }
+    } else if (!adminUser.roles.some((role) => role.id === adminRole?.id)) {
+      adminUser.roles.push(adminRole as Role);
+      await this.userRepository.save(adminUser);
+      console.log('✅ User Admin đã được gán thêm role Admin');
     }
-
-    console.log('🎉 Seed dữ liệu hoàn tất!');
   }
 }
