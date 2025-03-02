@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import { CustomException } from './customException';
 import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 interface IResponseError {
   status: HttpStatus;
   message: string;
   timestamp: string;
+  stackTrace?: string;
 }
 
 @Catch(CustomException)
@@ -23,6 +25,7 @@ export class HttpExceptionFillterFilter implements ExceptionFilter {
       message: exception.message,
       status: status,
       timestamp: new Date().toISOString(),
+      stackTrace: exception.stack,
     };
     response.status(status).json(error);
   }
