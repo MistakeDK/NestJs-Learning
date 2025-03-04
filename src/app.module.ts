@@ -14,6 +14,7 @@ import { CommomModule } from './module/commom/commom.module';
 import { RoleModule } from './module/role/role.module';
 import { PermissionModule } from './module/permission/permission.module';
 import { OpenaiModule } from './module/openai/openai.module';
+import { ChatGatewayModule } from './module/chat-gateway/chat-gateway.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OpenaiModule } from './module/openai/openai.module';
     PermissionModule,
     OpenaiModule,
     CommomModule,
+    ChatGatewayModule,
   ],
   providers: [AppService],
 })
