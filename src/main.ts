@@ -4,14 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { ResponseInterceptor } from './module/commom/response.interceptor';
 import { HttpExceptionFillterFilter } from './http-exception-fillter/http-exception-fillter.filter';
 import { ValidationPipe } from '@nestjs/common';
-import { AuthenticationGuard } from './guard/authentication.guard';
 declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFillterFilter());
-
   const configService = app.get<ConfigService>(ConfigService);
   await app.listen(configService.get('SERVER_PORT') || 8080);
   if (module.hot) {

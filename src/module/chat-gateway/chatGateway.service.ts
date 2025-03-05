@@ -1,3 +1,4 @@
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,20 +7,20 @@ import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayDisconnect,
+  WsResponse,
+  WsException,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { generateUUID } from 'src/utils/commom';
+import { WebSocketExceptionFilter } from './ws-exception-fillter.filter';
+import { StoreIdUserDTO } from './dto/storeIdUserDTO';
+import { JoinPrivateRoomDTO } from './dto/JoinPrivateRoomDTO';
+import { SendMessageToRoomDTO } from './dto/SendMessageToRoomDTO';
+import { ResponseInterceptor } from '../commom/response.interceptor';
 
-interface IBodyJoinPrivateRoom {
-  userIds: string[];
-}
-
-interface IBodySendMessageToRoom {
-  room: string;
-  message: string;
-  sender: string;
-}
-
+@UsePipes(
+  new ValidationPipe({ exceptionFactory: (error) => new WsException(error) }),
+)
+@UseFilters(WebSocketExceptionFilter)
 @WebSocketGateway(8002, { cors: '*' })
 export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -28,16 +29,20 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('storeIdUser')
   handleStoreUser(
-    @MessageBody() id: string,
+    @MessageBody() storeIdDTO: StoreIdUserDTO,
     @ConnectedSocket() client: Socket,
-  ) {
-    console.log('idUser', id);
-    this.users.set(id, client.id);
+  ): WsResponse {
+    this.users.set(storeIdDTO.id, client.id);
+
+    return {
+      event: 'store-reply',
+      data: 'store success',
+    };
   }
 
   @SubscribeMessage('joinPrivateRoom')
   handleJoinPrivateRoom(
-    @MessageBody() listUsers: IBodyJoinPrivateRoom,
+    @MessageBody() listUsers: JoinPrivateRoomDTO,
     @ConnectedSocket() client: Socket,
   ) {
     const room = listUsers.userIds.join(',');
@@ -51,7 +56,7 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('sendPrivateMessage')
-  handleSendPrivateMessage(@MessageBody() data: IBodySendMessageToRoom) {
+  handleSendPrivateMessage(@MessageBody() data: SendMessageToRoomDTO) {
     console.log('data send', data);
     this.server.sockets.to(data.room).emit('receivePrivateMessage', data);
   }
