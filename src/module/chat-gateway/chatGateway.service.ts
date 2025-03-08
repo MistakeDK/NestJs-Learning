@@ -1,4 +1,9 @@
-import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  UseFilters,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -15,12 +20,15 @@ import { WebSocketExceptionFilter } from './ws-exception-fillter.filter';
 import { StoreIdUserDTO } from './dto/storeIdUserDTO';
 import { JoinPrivateRoomDTO } from './dto/JoinPrivateRoomDTO';
 import { SendMessageToRoomDTO } from './dto/SendMessageToRoomDTO';
-import { ResponseInterceptor } from '../commom/response.interceptor';
+
+import { AuthenticationGuard } from 'src/guard/authentication.guard';
+import { authenticationWsGuard } from 'src/guard/authenticationWs.guard';
 
 @UsePipes(
   new ValidationPipe({ exceptionFactory: (error) => new WsException(error) }),
 )
 @UseFilters(WebSocketExceptionFilter)
+@UseGuards(authenticationWsGuard)
 @WebSocketGateway(8002, { cors: '*' })
 export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -61,6 +69,7 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.sockets.to(data.room).emit('receivePrivateMessage', data);
   }
 
+  @UseGuards(authenticationWsGuard)
   handleConnection(@ConnectedSocket() client: Socket) {
     console.log('id client has been connected', client.id);
   }

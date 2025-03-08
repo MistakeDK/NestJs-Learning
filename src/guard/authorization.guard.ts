@@ -4,7 +4,6 @@ import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ePermission } from 'src/config/permission.enum';
 import { PERMISSION_KEY } from 'src/decorator/permission.decorator';
-import { Permission } from 'src/module/permission/entities/permission.entity';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
