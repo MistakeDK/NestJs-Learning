@@ -1,4 +1,10 @@
-import { IsNotEmpty, MinLength } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ErrorCode } from 'src/config/constantError';
 import { CustomException } from 'src/http-exception-fillter/customException';
 
@@ -18,4 +24,8 @@ export class CreateUserDto {
     },
   })
   password: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  idRoles: string[];
 }

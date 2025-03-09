@@ -21,7 +21,7 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 256 })
   password: string;
 
-  @ManyToMany(() => Role, { nullable: true })
+  @ManyToMany(() => Role, { nullable: true, cascade: true })
   @JoinTable()
   roles: Role[];
   @BeforeInsert()
