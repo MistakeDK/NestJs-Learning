@@ -15,12 +15,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Permissions } from 'src/decorator/permission.decorator';
 import { ePermission } from 'src/config/permission.enum';
 import { AuthorizationGuard } from 'src/guard/authorization.guard';
+import { IsPublic } from 'src/decorator/public.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @IsPublic()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }

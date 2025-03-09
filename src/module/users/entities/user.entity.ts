@@ -9,8 +9,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import * as bcrypy from 'bcrypt';
+import { BaseEntity } from 'src/module/commom/entities/base.entity';
 @Entity()
-export class User {
+export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column({ type: 'varchar', length: 256 })
@@ -19,6 +20,7 @@ export class User {
   gmail: string;
   @Column({ type: 'varchar', length: 256 })
   password: string;
+
   @ManyToMany(() => Role, { nullable: true })
   @JoinTable()
   roles: Role[];
