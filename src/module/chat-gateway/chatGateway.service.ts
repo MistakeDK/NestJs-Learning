@@ -21,8 +21,10 @@ import { StoreIdUserDTO } from './dto/storeIdUserDTO';
 import { JoinPrivateRoomDTO } from './dto/JoinPrivateRoomDTO';
 import { SendMessageToRoomDTO } from './dto/SendMessageToRoomDTO';
 
-import { AuthenticationGuard } from 'src/guard/authentication.guard';
 import { authenticationWsGuard } from 'src/guard/authenticationWs.guard';
+import { AuthorizationWsGuard } from 'src/guard/authorizationWs.guard';
+import { Permissions } from 'src/decorator/permission.decorator';
+import { ePermission } from 'src/config/permission.enum';
 
 @UsePipes(
   new ValidationPipe({ exceptionFactory: (error) => new WsException(error) }),
@@ -35,6 +37,8 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
   private users = new Map<string, string>();
 
+  @UseGuards(AuthorizationWsGuard)
+  @Permissions([ePermission.CAN_CHAT])
   @SubscribeMessage('storeIdUser')
   handleStoreUser(
     @MessageBody() storeIdDTO: StoreIdUserDTO,
