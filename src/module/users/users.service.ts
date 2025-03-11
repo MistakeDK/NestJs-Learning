@@ -39,7 +39,22 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    return await this.userRepository.update(id, { ...updateUserDto });
+    const { idRoles } = updateUserDto;
+    const userCurrent = await this.userRepository.findOneBy({ id });
+    if (userCurrent === null) {
+      throw new CustomException(ErrorCode.USER_NOT_EXIST);
+    }
+    if ((idRoles as string[]).length > 0) {
+      const roles = await this.roleRepository.findBy({
+        id: In(idRoles as string[]),
+      });
+      if (roles.length !== (idRoles as string[]).length) {
+        throw new CustomException(ErrorCode.IN_VALID_ROLE);
+      }
+      userCurrent.roles = roles;
+    }
+
+    return await this.userRepository.update(id, userCurrent);
   }
 
   async remove(id: string) {

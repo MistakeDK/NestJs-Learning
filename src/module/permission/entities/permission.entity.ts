@@ -8,6 +8,9 @@ export class Permission {
   id: string;
   @Column({ type: 'enum', enum: ePermission })
   permission: ePermission;
-  @ManyToOne(() => Role, (role) => role.permissions)
+  @ManyToOne(() => Role, (role) => role.permissions, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   role: Role;
 }
