@@ -1,0 +1,53 @@
+version: '1.0'
+services:
+  app:
+    build: .
+    container_name: nest_chat_app
+    restart: always
+    env_file:
+      - .env.production
+    ports:
+      - '8080:8080'
+    depends_on:
+      - postgress
+      - mongodb
+    networks:
+      - chat_app
+
+  postgress:
+    image: postgres:17
+    container_name: postgress_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: chatdb
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chat_app
+
+  mongodb:
+    image: mongo:8.0
+    container_name: mongo_db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: chatdb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - chat_app
+
+networks:
+  chat_app:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
