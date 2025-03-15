@@ -16,6 +16,7 @@ import { PermissionModule } from './module/permission/permission.module';
 import { OpenaiModule } from './module/openai/openai.module';
 import { ChatGatewayModule } from './module/chat-gateway/chat-gateway.module';
 import { DatabaseModule } from './module/database/database.module';
+import { ChatStoreModule } from './module/chat-store/ChatStore.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { DatabaseModule } from './module/database/database.module';
     AuthModule,
     RoleModule,
     PermissionModule,
+    ChatStoreModule,
     OpenaiModule,
     CommomModule,
     ChatGatewayModule,

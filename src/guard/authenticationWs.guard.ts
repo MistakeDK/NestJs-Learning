@@ -21,11 +21,14 @@ export class authenticationWsGuard implements CanActivate {
       throw new CustomWsException(ErrorCode.UN_AUTHENTICATION);
     }
     try {
-      const payload = await this.jwtService.verifyAsync<IPayload>(token);
+      const payload = await this.jwtService.verifyAsync<IPayload>(token, {
+        secret: this.configService.getOrThrow('SECRET_KEY'),
+      });
       req['user'] = payload;
-    } catch {
+      return true;
+    } catch (err) {
+      console.log(err);
       throw new CustomWsException(ErrorCode.UN_AUTHENTICATION);
     }
-    return true;
   }
 }

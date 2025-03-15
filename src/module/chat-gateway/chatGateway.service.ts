@@ -1,4 +1,5 @@
 import {
+  Injectable,
   UseFilters,
   UseGuards,
   UsePipes,
@@ -25,10 +26,12 @@ import { authenticationWsGuard } from 'src/guard/authenticationWs.guard';
 import { AuthorizationWsGuard } from 'src/guard/authorizationWs.guard';
 import { Permissions } from 'src/decorator/permission.decorator';
 import { ePermission } from 'src/config/permission.enum';
+import { CreateMessageDTO } from '../chat-store/dto/createMessageDTO';
 
 @UsePipes(
   new ValidationPipe({ exceptionFactory: (error) => new WsException(error) }),
 )
+@Injectable()
 @UseFilters(WebSocketExceptionFilter)
 @UseGuards(authenticationWsGuard)
 @WebSocketGateway(8002, { cors: '*' })
@@ -37,40 +40,28 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
   private users = new Map<string, string>();
 
-  @UseGuards(AuthorizationWsGuard)
   @Permissions([ePermission.CAN_CHAT])
+  @UseGuards(AuthorizationWsGuard)
   @SubscribeMessage('storeIdUser')
   handleStoreUser(
     @MessageBody() storeIdDTO: StoreIdUserDTO,
     @ConnectedSocket() client: Socket,
-  ): WsResponse {
-    this.users.set(storeIdDTO.id, client.id);
-
-    return {
-      event: 'store-reply',
-      data: 'store success',
-    };
-  }
-
-  @SubscribeMessage('joinPrivateRoom')
-  handleJoinPrivateRoom(
-    @MessageBody() listUsers: JoinPrivateRoomDTO,
-    @ConnectedSocket() client: Socket,
   ) {
-    const room = listUsers.userIds.join(',');
-    client.join(room);
-    console.log('room', room);
-    listUsers.userIds.forEach((user) => {
-      this.server.sockets.sockets
-        .get(this.users.get(user) as string)
-        ?.join(room);
-    });
+    this.users.set(storeIdDTO.id, client.id);
   }
 
-  @SubscribeMessage('sendPrivateMessage')
-  handleSendPrivateMessage(@MessageBody() data: SendMessageToRoomDTO) {
-    console.log('data send', data);
-    this.server.sockets.to(data.room).emit('receivePrivateMessage', data);
+  handleSendPrivateMessage(
+    message: CreateMessageDTO,
+    idUsersReceive: string[],
+  ) {
+    const { sender } = message;
+    idUsersReceive.forEach((item) => {
+      if (this.users.has(item) && this.users.get(item) !== sender) {
+        this.server
+          .to(this.users.get(item) as string)
+          .emit('receiveMessage', message);
+      }
+    });
   }
 
   @UseGuards(authenticationWsGuard)

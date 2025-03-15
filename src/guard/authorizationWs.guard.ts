@@ -38,6 +38,6 @@ export class AuthorizationWsGuard implements CanActivate {
     if (isHavePermisison) {
       return true;
     }
-    throw new CustomWsException(ErrorCode.UN_AUTHORIZATION);
+    return false;
   }
 }

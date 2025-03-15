@@ -8,6 +8,7 @@ export enum ErrorCode {
   USER_OR_PASSWORD_INCORRECT,
   PASSWORD_TOO_SHORT,
   IN_VALID_ROLE,
+  CONVERSATION_IS_NOT_EXIST,
 }
 
 interface errorDetail {
@@ -43,5 +44,9 @@ export const mapError: Record<ErrorCode, errorDetail> = {
   [ErrorCode.IN_VALID_ROLE]: {
     code: HttpStatus.UNPROCESSABLE_ENTITY,
     message: 'some role in roleId is not valid',
+  },
+  [ErrorCode.CONVERSATION_IS_NOT_EXIST]: {
+    code: HttpStatus.UNPROCESSABLE_ENTITY,
+    message: 'Conversation is not exist',
   },
 };
