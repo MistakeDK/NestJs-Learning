@@ -9,8 +9,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalFilters(new HttpExceptionFillter());
   const configService = app.get<ConfigService>(ConfigService);
+  app.useGlobalFilters(new HttpExceptionFillter(configService));
   await app.listen(configService.get('SERVER_PORT') || 8080);
   if (module.hot) {
     module.hot.accept();

@@ -15,6 +15,11 @@ RUN pnpm install
 # Copy the rest of the application files
 COPY . .
 
+
+# ENV NODE_ENV=production
+
+# ENV ENV_FILE_PATH=.env.production
+
 # Build the NestJS application
 RUN pnpm build
 
@@ -22,4 +27,4 @@ RUN pnpm build
 EXPOSE 8080
 
 # Command to run the application
-CMD ["node", "dist/main"]
+CMD ["pnpm", "start:prod"]

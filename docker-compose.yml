@@ -1,4 +1,4 @@
-version: '1.0'
+version: '3.8'
 name: chat_app_pro
 services:
   app:
@@ -10,14 +10,14 @@ services:
     ports:
       - '8080:8080'
     depends_on:
-      - postgress
+      - postgres
       - mongodb
     networks:
       - chat_app
 
-  postgress:
+  postgres:
     image: postgres:17
-    container_name: postgress_db
+    container_name: postgres_db
     restart: always
     environment:
       POSTGRES_USER: root

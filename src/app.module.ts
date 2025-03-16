@@ -22,6 +22,7 @@ import { ChatStoreModule } from './module/chat-store/ChatStore.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '.env.production'],
     }),
     DatabaseModule,
     UsersModule,
@@ -33,6 +34,5 @@ import { ChatStoreModule } from './module/chat-store/ChatStore.module';
     CommomModule,
     ChatGatewayModule,
   ],
-  providers: [AppService],
 })
 export class AppModule {}

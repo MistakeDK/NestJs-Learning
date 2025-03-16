@@ -18,6 +18,7 @@ interface IResponseError {
 
 @Catch(CustomException)
 export class HttpExceptionFillter implements ExceptionFilter {
+  constructor(private readonly configService: ConfigService) {}
   catch(exception: CustomException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -27,7 +28,9 @@ export class HttpExceptionFillter implements ExceptionFilter {
       message: exception.message,
       status: status,
       timestamp: new Date().toISOString(),
-      stackTrace: exception.stack,
+      stackTrace: this.configService.getOrThrow<boolean>('IS_PRODUCTION')
+        ? exception.stack
+        : '',
     };
     response.status(status).json(error);
   }
@@ -35,6 +38,8 @@ export class HttpExceptionFillter implements ExceptionFilter {
 
 @Catch()
 export class CatchAllException implements ExceptionFilter {
+  constructor(private readonly configService: ConfigService) {}
+
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -43,7 +48,9 @@ export class CatchAllException implements ExceptionFilter {
       message: mapError[ErrorCode.UN_HANDLE_EXCEPTION].message as string,
       status: mapError[ErrorCode.UN_HANDLE_EXCEPTION].code,
       timestamp: new Date().toISOString(),
-      stackTrace: exception.stack,
+      stackTrace: this.configService.getOrThrow<boolean>('IS_PRODUCTION')
+        ? exception.stack
+        : '',
     };
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
   }
