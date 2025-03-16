@@ -4,3 +4,7 @@ compose:
 
 log-nest:
 	docker logs nest_chat_app
+
+build-and-push:
+	docker build -t datnguyen03/chat-app:latest .
+	docker push datnguyen03/chat-app:latest
