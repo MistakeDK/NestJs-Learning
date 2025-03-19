@@ -11,6 +11,12 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   const configService = app.get<ConfigService>(ConfigService);
   app.useGlobalFilters(new HttpExceptionFillter(configService));
+  app.enableCors({
+    methods: '*',
+    credentials: true,
+    allowedHeaders: 'Content-Type, Accept',
+    origin: configService.getOrThrow<string>('COR_URL'),
+  });
   await app.listen(configService.get('SERVER_PORT') || 8080);
   if (module.hot) {
     module.hot.accept();

@@ -22,7 +22,8 @@ import { ChatStoreModule } from './module/chat-store/ChatStore.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.production'],
+      envFilePath:
+        process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
     }),
     DatabaseModule,
     UsersModule,
