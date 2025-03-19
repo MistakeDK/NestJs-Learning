@@ -21,8 +21,6 @@ export interface IPayload {
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(Role) private roleRepository: Repository<Role>,
-
     private jwtService: JwtService,
   ) {}
   async login(loginData: LoginDTO): Promise<ResponseLoginDTO> {
@@ -46,14 +44,24 @@ export class AuthService {
         gmail: loginData.gmail,
         permission: permissions,
       };
-      const token = await this.jwtService.signAsync(payload, {
+
+      const accessToken = await this.jwtService.signAsync(payload, {
         jwtid: generateUUID(),
         expiresIn: 600,
       });
 
-      return plainToInstance(ResponseLoginDTO, { token });
+      const refreshToken = await this.jwtService.signAsync(payload, {
+        jwtid: generateUUID(),
+        expiresIn: '24h',
+      });
+
+      return plainToInstance(ResponseLoginDTO, { accessToken, refreshToken });
     } else {
       throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);
     }
+  }
+  async getMe(id: string) {
+    const user = this.userRepository.findBy({ id });
+    return user;
   }
 }
