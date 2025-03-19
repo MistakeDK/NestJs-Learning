@@ -12,6 +12,7 @@ import { LoginDTO } from './dto/login.dto';
 import { AuthService } from './auth.service';
 import { ResponseLoginDTO } from './dto/response-login.dto';
 import { IsPublic } from 'src/decorator/public.decorator';
+import { IsSameUser } from 'src/decorator/IsSameUser.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -23,6 +24,7 @@ export class AuthController {
   }
 
   @Get('/:id')
+  @IsSameUser()
   getMe(@Param('id', ParseUUIDPipe) id: string) {
     return this.authService.getMe(id);
   }

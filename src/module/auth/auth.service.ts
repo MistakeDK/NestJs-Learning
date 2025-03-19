@@ -16,6 +16,7 @@ import { ePermission } from 'src/config/permission.enum';
 export interface IPayload {
   gmail: string;
   permission: ePermission[];
+  idUser: string;
 }
 @Injectable()
 export class AuthService {
@@ -40,9 +41,10 @@ export class AuthService {
       .map((permission) => permission.permission);
 
     if (isMatch) {
-      const payload = {
+      const payload: IPayload = {
         gmail: loginData.gmail,
         permission: permissions,
+        idUser: user.id,
       };
 
       const accessToken = await this.jwtService.signAsync(payload, {
