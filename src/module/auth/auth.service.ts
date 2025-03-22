@@ -12,6 +12,7 @@ import { ResponseLoginDTO } from './dto/response-login.dto';
 import { plainToInstance } from 'class-transformer';
 import { Role } from '../role/entities/role.entity';
 import { ePermission } from 'src/config/permission.enum';
+import { ResponseGetMe } from './dto/response-getMe.dto';
 
 export interface IPayload {
   gmail: string;
@@ -57,13 +58,24 @@ export class AuthService {
         expiresIn: '24h',
       });
 
-      return plainToInstance(ResponseLoginDTO, { accessToken, refreshToken });
+      return plainToInstance(ResponseLoginDTO, {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        id: user.id,
+      });
     } else {
       throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);
     }
   }
+
   async getMe(id: string) {
-    const user = this.userRepository.findBy({ id });
-    return user;
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new CustomException(ErrorCode.USER_NOT_EXIST);
+    }
+    return plainToInstance(ResponseGetMe, {
+      gmail: user.gmail,
+      name: user.name,
+    });
   }
 }

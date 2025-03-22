@@ -14,7 +14,7 @@ async function bootstrap() {
   app.enableCors({
     methods: '*',
     credentials: true,
-    allowedHeaders: 'Content-Type, Accept',
+    allowedHeaders: '*',
     origin: configService.getOrThrow<string>('COR_URL'),
   });
   await app.listen(configService.get('SERVER_PORT') || 8080);

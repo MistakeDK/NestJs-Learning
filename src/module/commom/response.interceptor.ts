@@ -12,7 +12,7 @@ import { map, tap } from 'rxjs/operators';
 interface IResponse<T> {
   statusCode: HttpStatus;
   timestamp: string;
-  data: T;
+  message: T;
 }
 
 @Injectable()
@@ -26,7 +26,7 @@ export class ResponseInterceptor<T>
     return next.handle().pipe(
       map((data) => {
         return {
-          data: data,
+          message: data,
           statusCode: context.switchToHttp().getResponse().statusCode,
           timestamp: new Date().toISOString(),
         };
