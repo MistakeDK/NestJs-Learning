@@ -2,6 +2,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
@@ -25,6 +26,7 @@ export class CreateUserDto {
   })
   password: string;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   idRoles: string[];

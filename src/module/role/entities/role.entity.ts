@@ -6,12 +6,13 @@ import {
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-  @Column({ type: 'varchar', length: 256 })
+  @Column({ type: 'varchar', length: 256, unique: true })
   name: string;
   @Column({ type: 'varbit', length: 256, nullable: true })
   description?: string;

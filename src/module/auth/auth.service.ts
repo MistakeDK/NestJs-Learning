@@ -12,8 +12,9 @@ import { ResponseLoginDTO } from './dto/response-login.dto';
 import { plainToInstance } from 'class-transformer';
 import { ePermission } from 'src/config/permission.enum';
 import { ResponseGetMe } from './dto/response-getMe.dto';
-import { Request } from 'express';
 import { CacheAppService } from '../cache/cacheApp.service';
+import { RegisterDTO } from './dto/register.dto';
+import { Role } from '../role/entities/role.entity';
 export interface IPayload {
   gmail: string;
   permission: ePermission[];
@@ -27,6 +28,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
     private cacheAppSerice: CacheAppService,
   ) {}
   async login(loginData: LoginDTO): Promise<ResponseLoginDTO> {
@@ -70,6 +72,19 @@ export class AuthService {
     } else {
       throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);
     }
+  }
+
+  async register(registerData: RegisterDTO) {
+    const roleDefault = await this.roleRepository.find({
+      where: {
+        name: 'User',
+      },
+    });
+    const newUser = this.userRepository.create({
+      ...registerData,
+      roles: roleDefault,
+    });
+    await this.userRepository.save(newUser);
   }
 
   async logout(request: Request) {

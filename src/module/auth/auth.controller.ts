@@ -15,15 +15,22 @@ import { AuthService } from './auth.service';
 import { ResponseLoginDTO } from './dto/response-login.dto';
 import { IsPublic } from 'src/decorator/public.decorator';
 import { IsSameUser } from 'src/decorator/IsSameUser.decorator';
-import { Request } from 'express';
+import { RegisterDTO } from './dto/register.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
   @IsPublic()
-  @Post()
+  @Post('/login')
   @HttpCode(HttpStatus.OK)
   login(@Body() loginDTO: LoginDTO): Promise<ResponseLoginDTO> {
     return this.authService.login(loginDTO);
+  }
+
+  @IsPublic()
+  @Post('/register')
+  @HttpCode(HttpStatus.OK)
+  register(@Body() registerDTO: RegisterDTO) {
+    return this.authService.register(registerDTO);
   }
 
   @Patch()

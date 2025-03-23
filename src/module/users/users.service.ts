@@ -17,7 +17,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const { idRoles } = createUserDto;
     const newUser = this.userRepository.create(createUserDto);
-    if (idRoles.length > 0) {
+    if (idRoles && idRoles.length > 0) {
       const roles = await this.roleRepository.findBy({ id: In(idRoles) });
       if (roles.length !== idRoles.length) {
         throw new CustomException(ErrorCode.IN_VALID_ROLE);
