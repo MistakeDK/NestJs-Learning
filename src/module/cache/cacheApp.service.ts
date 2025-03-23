@@ -28,4 +28,15 @@ export class CacheAppService {
     }
     return value;
   }
+
+  async isExist(key: string) {
+    if (await this.cacheManager.get(key)) {
+      return true;
+    }
+    return false;
+  }
+
+  async setValue(key: string, value: unknown, ttl: number) {
+    await this.cacheManager.set(key, value, ttl * 10 * 10 * 10);
+  }
 }

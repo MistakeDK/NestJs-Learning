@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { Role } from '../role/entities/role.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthenticationGuard } from 'src/guard/authentication.guard';
+import { CacheAppService } from '../cache/cacheApp.service';
 
 @Module({
   controllers: [AuthController],
@@ -26,6 +27,7 @@ import { AuthenticationGuard } from 'src/guard/authentication.guard';
   ],
   providers: [
     AuthService,
+    CacheAppService,
     {
       provide: APP_GUARD,
       useClass: AuthenticationGuard,

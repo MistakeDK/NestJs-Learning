@@ -7,6 +7,7 @@ import { IS_SAME_USER } from 'src/decorator/IsSameUser.decorator';
 import { IS_PUBLIC_KEY } from 'src/decorator/public.decorator';
 import { CustomException } from 'src/http-exception-fillter/customException';
 import { IPayload } from 'src/module/auth/auth.service';
+import { CacheAppService } from 'src/module/cache/cacheApp.service';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
@@ -14,6 +15,7 @@ export class AuthenticationGuard implements CanActivate {
     private jwtService: JwtService,
     private configService: ConfigService,
     private reflector: Reflector,
+    private cacheAppService: CacheAppService,
   ) {}
   async canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -38,6 +40,9 @@ export class AuthenticationGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<IPayload>(token, {
         secret: this.configService.getOrThrow<string>('SECRET_KEY'),
       });
+      if (await this.cacheAppService.isExist(`invalidToken:${payload.jti}`)) {
+        throw new CustomException(ErrorCode.UN_AUTHENTICATION);
+      }
       if (isSameUser && request.url.split('/').pop() !== payload.idUser) {
         throw new CustomException(ErrorCode.UN_AUTHENTICATION);
       }

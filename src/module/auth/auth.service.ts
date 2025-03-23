@@ -10,20 +10,24 @@ import { CustomException } from 'src/http-exception-fillter/customException';
 import { ErrorCode } from 'src/config/constantError';
 import { ResponseLoginDTO } from './dto/response-login.dto';
 import { plainToInstance } from 'class-transformer';
-import { Role } from '../role/entities/role.entity';
 import { ePermission } from 'src/config/permission.enum';
 import { ResponseGetMe } from './dto/response-getMe.dto';
-
+import { Request } from 'express';
+import { CacheAppService } from '../cache/cacheApp.service';
 export interface IPayload {
   gmail: string;
   permission: ePermission[];
   idUser: string;
+  jti?: string;
+  exp?: number;
+  iat?: number;
 }
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private cacheAppSerice: CacheAppService,
   ) {}
   async login(loginData: LoginDTO): Promise<ResponseLoginDTO> {
     const user = await this.userRepository.findOne({
@@ -66,6 +70,17 @@ export class AuthService {
     } else {
       throw new CustomException(ErrorCode.USER_OR_PASSWORD_INCORRECT);
     }
+  }
+
+  async logout(request: Request) {
+    const infoLogin: IPayload = request['user'];
+    const currentTimeStamp = Math.floor(Date.now() / 1000);
+    const ttl = (infoLogin.exp ?? 0) - currentTimeStamp;
+    if (ttl > 0) {
+      this.cacheAppSerice.setValue(`invalidToken:${infoLogin.jti}`, true, ttl);
+      return 'logout success';
+    }
+    return 'token already logout';
   }
 
   async getMe(id: string) {
