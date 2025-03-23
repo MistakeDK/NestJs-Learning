@@ -10,6 +10,7 @@ import { ChatStoreService } from './chatStore.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { ChatGateWay } from '../chat-gateway/chatGateway.service';
+import { CacheAppService } from '../cache/cacheApp.service';
 
 @Module({
   controllers: [ChatStoreController],
@@ -20,6 +21,6 @@ import { ChatGateWay } from '../chat-gateway/chatGateway.service';
     ]),
     TypeOrmModule.forFeature([User]),
   ],
-  providers: [ChatStoreService, ChatGateWay],
+  providers: [ChatStoreService, ChatGateWay, CacheAppService],
 })
 export class ChatStoreModule {}

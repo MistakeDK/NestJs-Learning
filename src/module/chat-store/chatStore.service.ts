@@ -1,3 +1,5 @@
+import { plainToInstance } from 'class-transformer';
+import { CacheAppService } from './../cache/cacheApp.service';
 import { ChatGateWay } from './../chat-gateway/chatGateway.service';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,7 +22,8 @@ export class ChatStoreService {
     private readonly conversationModel: Model<Conversation>,
     @InjectModel(Message.name) private readonly messageModel: Model<Message>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly ChatGateWay: ChatGateWay,
+    private readonly chatGateWay: ChatGateWay,
+    private readonly cacheAppService: CacheAppService,
   ) {}
   async createConversation(createConversationDTO: CreateConversationDTO) {
     const { participants } = createConversationDTO;
@@ -38,19 +41,41 @@ export class ChatStoreService {
     return await createdConversation.save();
   }
 
-  async getAllConversationByIdUser(id: string, querry: IQuerryPage) {
-    const result = await this.conversationModel
-      .find({
-        participants: {
-          $in: [id],
-        },
-      })
-      .exec();
-    return result;
+  async getAllConversationByIdUser(idUser: string, querry: IQuerryPage) {
+    const listConversationIds = await this.cacheAppService.getOrSet(
+      `conversationIds:${idUser}`,
+      () => {
+        return this.conversationModel
+          .find({
+            participants: {
+              $in: [idUser],
+            },
+          })
+          .sort({
+            updatedAt: -1,
+          })
+          .select('_id');
+      },
+      100,
+    );
+
+    const conversations = await Promise.all(
+      listConversationIds.map(async ({ _id }) => {
+        return this.cacheAppService.getOrSet(
+          `conversation:${_id}`,
+          async () => {
+            return this.conversationModel.findById(_id).lean();
+          },
+          200,
+        );
+      }),
+    );
+
+    return conversations;
   }
 
   async sendMessage(createMessageDTO: CreateMessageDTO) {
-    const { conversationId } = createMessageDTO;
+    const { conversationId, sender, content } = createMessageDTO;
     const isConversationExist =
       await this.conversationModel.findById(conversationId);
     if (!isConversationExist) {
@@ -58,7 +83,10 @@ export class ChatStoreService {
     }
     const newMessage = new this.messageModel({ ...createMessageDTO });
     await newMessage.save();
-    this.ChatGateWay.handleSendPrivateMessage(
+    this.conversationModel.findByIdAndUpdate(conversationId, {
+      lastMessage: { idUser: sender, message: content },
+    });
+    this.chatGateWay.handleSendPrivateMessage(
       createMessageDTO,
       isConversationExist.participants,
     );

@@ -17,6 +17,7 @@ import { OpenaiModule } from './module/openai/openai.module';
 import { ChatGatewayModule } from './module/chat-gateway/chat-gateway.module';
 import { DatabaseModule } from './module/database/database.module';
 import { ChatStoreModule } from './module/chat-store/ChatStore.module';
+import { CacheAppModule } from './module/cache/cacheApp.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ChatStoreModule } from './module/chat-store/ChatStore.module';
       envFilePath:
         process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
     }),
+    CacheAppModule,
     DatabaseModule,
     UsersModule,
     AuthModule,

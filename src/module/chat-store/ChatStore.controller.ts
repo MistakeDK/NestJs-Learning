@@ -23,12 +23,11 @@ export class ChatStoreController {
   }
 
   @Get('/:id')
-  @IsPublic()
   getConversationById(
-    @Param('id') id: string,
+    @Param('id') idUser: string,
     @Query(QuerryPagePipe) querry: IQuerryPage,
   ) {
-    return this.chatStoreSerive.getAllConversationByIdUser(id, querry);
+    return this.chatStoreSerive.getAllConversationByIdUser(idUser, querry);
   }
 
   @Post('sendMessage')

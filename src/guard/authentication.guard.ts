@@ -32,12 +32,11 @@ export class AuthenticationGuard implements CanActivate {
 
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      console.log(token);
       throw new CustomException(ErrorCode.UN_AUTHENTICATION);
     }
     try {
       const payload = await this.jwtService.verifyAsync<IPayload>(token, {
-        secret: this.configService.get<string>('SECRET_KEY'),
+        secret: this.configService.getOrThrow<string>('SECRET_KEY'),
       });
       if (isSameUser && request.url.split('/').pop() !== payload.idUser) {
         throw new CustomException(ErrorCode.UN_AUTHENTICATION);
