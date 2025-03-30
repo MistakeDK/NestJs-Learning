@@ -56,7 +56,7 @@ export class AuthService {
 
       const accessToken = await this.jwtService.signAsync(payload, {
         jwtid: generateUUID(),
-        expiresIn: 600,
+        expiresIn: 600000,
       });
 
       const refreshToken = await this.jwtService.signAsync(payload, {

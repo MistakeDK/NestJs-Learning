@@ -71,7 +71,51 @@ export class ChatStoreService {
       }),
     );
 
-    return conversations;
+    const result = await Promise.all(
+      conversations.map(async (conversation) => {
+        if (!conversation) return null;
+
+        const otherUserId = conversation.participants.find(
+          (participantId: string) => participantId !== idUser,
+        );
+
+        const userInfo = otherUserId
+          ? await this.cacheAppService.getOrSet(
+              `userInfo:${otherUserId}`,
+              async () => {
+                return this.userRepository.findOneBy({
+                  id: otherUserId,
+                });
+              },
+              360000,
+            )
+          : null;
+
+        return {
+          ...conversation,
+          name: userInfo?.name || 'Deleted Account',
+        };
+      }),
+    );
+
+    return result;
+  }
+
+  async getDetailConversation(idConversation: string, querry: IQuerryPage) {
+    const messageDetail = this.cacheAppService.getOrSet(
+      `detailConversation:${idConversation}`,
+      () => {
+        return this.messageModel
+          .find({
+            conversationId: idConversation,
+          })
+          .sort({
+            createdAt: 'desc',
+          });
+      },
+      30,
+    );
+    return messageDetail;
   }
 
   async sendMessage(createMessageDTO: CreateMessageDTO) {

@@ -30,6 +30,14 @@ export class ChatStoreController {
     return this.chatStoreSerive.getAllConversationByIdUser(idUser, querry);
   }
 
+  @Get('/detail/:id')
+  getDetailConversation(
+    @Param('id') idConversation: string,
+    @Query(QuerryPagePipe) query: IQuerryPage,
+  ) {
+    return this.chatStoreSerive.getDetailConversation(idConversation, query);
+  }
+
   @Post('sendMessage')
   sendMessage(@Body() createMessageDTO: CreateMessageDTO) {
     return this.chatStoreSerive.sendMessage(createMessageDTO);
