@@ -5,7 +5,8 @@ import { HydratedDocument } from 'mongoose';
 export class LastMessage {
   @Prop({ required: true })
   idUser: string;
-
+  @Prop({ required: true })
+  username: string;
   @Prop({ required: true })
   message: string;
 }

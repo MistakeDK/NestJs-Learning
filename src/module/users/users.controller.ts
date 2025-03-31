@@ -8,6 +8,7 @@ import {
   Delete,
   ParseUUIDPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,6 +17,8 @@ import { Permissions } from 'src/decorator/permission.decorator';
 import { ePermission } from 'src/config/permission.enum';
 import { AuthorizationGuard } from 'src/guard/authorization.guard';
 import { IsPublic } from 'src/decorator/public.decorator';
+import { IQuerryPage, QuerryPagePipe } from 'src/pipe/querry-page.pipe';
+import { ParseStringPipe } from 'src/pipe/parse-string.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -25,6 +28,14 @@ export class UsersController {
   @IsPublic()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @Get('/findByName')
+  findUserByName(
+    @Query(QuerryPagePipe) querryPage: IQuerryPage,
+    @Query('name', ParseStringPipe) name: string,
+  ) {
+    return this.usersService.findUserByName(querryPage, name);
   }
 
   @UseGuards(AuthorizationGuard)

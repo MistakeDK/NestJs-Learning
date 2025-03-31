@@ -42,63 +42,12 @@ export class ChatStoreService {
   }
 
   async getAllConversationByIdUser(idUser: string, querry: IQuerryPage) {
-    const listConversationIds = await this.cacheAppService.getOrSet(
-      `conversationIds:${idUser}`,
-      () => {
-        return this.conversationModel
-          .find({
-            participants: {
-              $in: [idUser],
-            },
-          })
-          .sort({
-            updatedAt: -1,
-          })
-          .select('_id');
-      },
-      100,
-    );
+    const listConversation = await this.conversationModel
+      .find({ participants: { $in: [idUser] } })
+      .sort({ updatedAt: 'desc' })
+      .lean();
 
-    const conversations = await Promise.all(
-      listConversationIds.map(async ({ _id }) => {
-        return this.cacheAppService.getOrSet(
-          `conversation:${_id}`,
-          async () => {
-            return this.conversationModel.findById(_id).lean();
-          },
-          200,
-        );
-      }),
-    );
-
-    const result = await Promise.all(
-      conversations.map(async (conversation) => {
-        if (!conversation) return null;
-
-        const otherUserId = conversation.participants.find(
-          (participantId: string) => participantId !== idUser,
-        );
-
-        const userInfo = otherUserId
-          ? await this.cacheAppService.getOrSet(
-              `userInfo:${otherUserId}`,
-              async () => {
-                return this.userRepository.findOneBy({
-                  id: otherUserId,
-                });
-              },
-              360000,
-            )
-          : null;
-
-        return {
-          ...conversation,
-          name: userInfo?.name || 'Deleted Account',
-        };
-      }),
-    );
-
-    return result;
+    return listConversation;
   }
 
   async getDetailConversation(idConversation: string, querry: IQuerryPage) {
@@ -120,6 +69,18 @@ export class ChatStoreService {
 
   async sendMessage(createMessageDTO: CreateMessageDTO) {
     const { conversationId, sender, content } = createMessageDTO;
+    const user = await this.cacheAppService.getOrSet(
+      `user:${sender}`,
+      () => {
+        return this.userRepository.findOneBy({
+          id: sender,
+        });
+      },
+      10,
+    );
+    if (!user) {
+      throw new CustomException(ErrorCode.USER_NOT_EXIST);
+    }
     const isConversationExist =
       await this.conversationModel.findById(conversationId);
     if (!isConversationExist) {
@@ -127,8 +88,8 @@ export class ChatStoreService {
     }
     const newMessage = new this.messageModel({ ...createMessageDTO });
     await newMessage.save();
-    this.conversationModel.findByIdAndUpdate(conversationId, {
-      lastMessage: { idUser: sender, message: content },
+    await this.conversationModel.findByIdAndUpdate(conversationId, {
+      lastMessage: { idUser: sender, message: content, username: user.name },
     });
     this.chatGateWay.handleSendPrivateMessage(
       createMessageDTO,

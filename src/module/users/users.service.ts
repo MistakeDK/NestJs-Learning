@@ -7,6 +7,7 @@ import { In, Repository } from 'typeorm';
 import { Role } from '../role/entities/role.entity';
 import { CustomException } from 'src/http-exception-fillter/customException';
 import { ErrorCode } from 'src/config/constantError';
+import { IQuerryPage } from 'src/pipe/querry-page.pipe';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +27,26 @@ export class UsersService {
     }
 
     await this.userRepository.save(newUser);
+  }
+
+  async findUserByName(querryPage: IQuerryPage, name: string) {
+    const { page, limit } = querryPage;
+    const skip = (page - 1) * limit;
+    const [users, total] = await this.userRepository
+      .createQueryBuilder(`user`)
+      .where('user.name LIKE :name', {
+        name: `%${name}%`,
+      })
+      .select(['user.id', 'user.name'])
+      .orderBy('user.create')
+      .skip(skip)
+      .limit(limit)
+      .getManyAndCount();
+
+    return {
+      users,
+      total,
+    };
   }
 
   async findAll() {
