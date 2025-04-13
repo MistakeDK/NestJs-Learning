@@ -40,9 +40,9 @@ export class UsersService {
       .select(['user.id', 'user.name'])
       .orderBy('user.create')
       .skip(skip)
-      .limit(limit)
+      .take(limit)
       .getManyAndCount();
-
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     return {
       users,
       total,

@@ -3,7 +3,7 @@ import { eMessageType } from 'src/config/messageType.enum';
 
 export class CreateMessageDTO {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   conversationId: string;
   @IsString()
   @IsNotEmpty()
@@ -14,4 +14,6 @@ export class CreateMessageDTO {
   @IsOptional()
   @IsEnum(eMessageType)
   type: string;
+  @IsOptional()
+  receiver: string;
 }

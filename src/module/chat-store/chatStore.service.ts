@@ -4,7 +4,7 @@ import { ChatGateWay } from './../chat-gateway/chatGateway.service';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Conversation } from './entities/conversation.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Message } from './entities/message.schema';
 import { CreateConversationDTO } from './dto/createConversationDTO';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +14,8 @@ import { CustomException } from 'src/http-exception-fillter/customException';
 import { ErrorCode } from 'src/config/constantError';
 import { IQuerryPage } from 'src/pipe/querry-page.pipe';
 import { CreateMessageDTO } from './dto/createMessageDTO';
+import { formatCacheKey } from 'src/utils/commom';
+import { eKeyCache } from 'src/config/keyCache.enum';
 
 @Injectable()
 export class ChatStoreService {
@@ -51,49 +53,104 @@ export class ChatStoreService {
   }
 
   async getDetailConversation(idConversation: string, querry: IQuerryPage) {
-    const messageDetail = this.cacheAppService.getOrSet(
-      `detailConversation:${idConversation}`,
+    const messageDetail = await this.cacheAppService.getOrSet(
+      formatCacheKey(eKeyCache.DETAIL_CONVERSATION, {
+        conversationId: idConversation,
+      }),
       () => {
         return this.messageModel
           .find({
-            conversationId: idConversation,
+            conversationId: new Types.ObjectId(idConversation),
           })
           .sort({
             createdAt: 'desc',
           });
       },
-      30,
+      3,
     );
     return messageDetail;
   }
 
   async sendMessage(createMessageDTO: CreateMessageDTO) {
-    const { conversationId, sender, content } = createMessageDTO;
+    const { conversationId, sender, content, receiver } = createMessageDTO;
+
     const user = await this.cacheAppService.getOrSet(
-      `user:${sender}`,
-      () => {
-        return this.userRepository.findOneBy({
-          id: sender,
-        });
-      },
-      10,
+      formatCacheKey(eKeyCache.USER, {
+        userId: sender,
+      }),
+      () => this.userRepository.findOneBy({ id: sender }),
+      20,
     );
+
     if (!user) {
       throw new CustomException(ErrorCode.USER_NOT_EXIST);
     }
-    const isConversationExist =
-      await this.conversationModel.findById(conversationId);
-    if (!isConversationExist) {
-      throw new CustomException(ErrorCode.CONVERSATION_IS_NOT_EXIST);
+
+    const conversation = conversationId
+      ? await this.getConversationById(conversationId)
+      : await this.getOrCreateConversation(sender, receiver);
+
+    if (!conversation) {
+      throw new CustomException(ErrorCode.UN_HANDLE_EXCEPTION);
     }
-    const newMessage = new this.messageModel({ ...createMessageDTO });
+
+    const newMessage = new this.messageModel({
+      ...createMessageDTO,
+      conversationId: conversation._id,
+    });
     await newMessage.save();
-    await this.conversationModel.findByIdAndUpdate(conversationId, {
+
+    await this.conversationModel.findByIdAndUpdate(conversation?._id, {
       lastMessage: { idUser: sender, message: content, username: user.name },
     });
+
     this.chatGateWay.handleSendPrivateMessage(
       createMessageDTO,
-      isConversationExist.participants,
+      conversation.participants,
     );
+    return {
+      _id: newMessage._id,
+      conversationId: conversation._id.toString(),
+      content: content,
+    };
+  }
+
+  // Helper
+
+  private async getConversationById(conversationId: string) {
+    const conversation = await this.conversationModel.findById(conversationId);
+    if (!conversation) {
+      throw new CustomException(ErrorCode.CONVERSATION_IS_NOT_EXIST);
+    }
+    return conversation;
+  }
+
+  private async getOrCreateConversation(sender: string, receiver: string) {
+    let conversation = await this.conversationModel.findOne({
+      participants: { $all: [sender, receiver], $size: 2 },
+    });
+
+    if (!conversation) {
+      const userSenderPromise = this.userRepository.findOneByOrFail({
+        id: sender,
+      });
+
+      const userReceiverPromise = this.userRepository.findOneByOrFail({
+        id: receiver,
+      });
+
+      const [userSender, userReceivere] = await Promise.all([
+        userSenderPromise,
+        userReceiverPromise,
+      ]);
+
+      const newConversation = new this.conversationModel({
+        nameParticipants: [userSender.name, userReceivere.name],
+        participants: [userSender.id, userReceivere.id],
+      });
+      conversation = await newConversation.save();
+    }
+
+    return conversation;
   }
 }

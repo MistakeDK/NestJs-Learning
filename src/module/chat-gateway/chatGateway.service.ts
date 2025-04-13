@@ -19,8 +19,6 @@ import {
 import { Socket, Server } from 'socket.io';
 import { WebSocketExceptionFilter } from './ws-exception-fillter.filter';
 import { StoreIdUserDTO } from './dto/storeIdUserDTO';
-import { JoinPrivateRoomDTO } from './dto/JoinPrivateRoomDTO';
-import { SendMessageToRoomDTO } from './dto/SendMessageToRoomDTO';
 
 import { authenticationWsGuard } from 'src/guard/authenticationWs.guard';
 import { AuthorizationWsGuard } from 'src/guard/authorizationWs.guard';
@@ -47,6 +45,7 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() storeIdDTO: StoreIdUserDTO,
     @ConnectedSocket() client: Socket,
   ) {
+    console.log('storeIdDTO', storeIdDTO);
     this.users.set(storeIdDTO.id, client.id);
   }
 

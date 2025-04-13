@@ -21,7 +21,12 @@ export type ConversationDocument = HydratedDocument<Conversation>;
 export class Conversation {
   @Prop({ type: [String], required: true })
   participants: string[];
+
+  @Prop({ type: [String], required: true })
+  nameParticipants: string[];
+
   @Prop({ type: LastMessageSchema })
   lastMessage: LastMessage;
 }
+
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);
