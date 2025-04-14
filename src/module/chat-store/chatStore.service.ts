@@ -44,12 +44,17 @@ export class ChatStoreService {
   }
 
   async getAllConversationByIdUser(idUser: string, querry: IQuerryPage) {
+    const total = await this.conversationModel.countDocuments({
+      participants: { $in: [idUser] },
+    });
     const listConversation = await this.conversationModel
       .find({ participants: { $in: [idUser] } })
+      .limit(querry.limit)
+      .skip((querry.page - 1) * querry.limit)
       .sort({ updatedAt: 'desc' })
       .lean();
 
-    return listConversation;
+    return { listConversation, total };
   }
 
   async getDetailConversation(idConversation: string, querry: IQuerryPage) {
