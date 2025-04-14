@@ -31,11 +31,10 @@ export class AuthorizationWsGuard implements CanActivate {
     if (user.permission.length === 0) {
       throw new CustomWsException(ErrorCode.UN_AUTHORIZATION);
     }
-    const requiredPermissionSet = new Set(requiredPermission);
-    const isHavePermisison = (user as IPayload).permission.every((item) =>
-      requiredPermissionSet.has(item),
+    const isHaveAllPermission = requiredPermission.every((perm) =>
+      user.permission.includes(perm),
     );
-    if (isHavePermisison) {
+    if (isHaveAllPermission) {
       return true;
     }
     return false;

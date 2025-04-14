@@ -54,8 +54,9 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     idUsersReceive: string[],
   ) {
     const { sender } = message;
+    console.log('this.users', this.users);
     idUsersReceive.forEach((item) => {
-      if (this.users.has(item) && this.users.get(item) !== sender) {
+      if (this.users.has(item) && item !== sender) {
         this.server
           .to(this.users.get(item) as string)
           .emit('receiveMessage', message);

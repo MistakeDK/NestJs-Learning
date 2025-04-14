@@ -25,11 +25,11 @@ export class AuthorizationGuard implements CanActivate {
     if ((user as IPayload).permission.length === 0) {
       return false;
     }
-    const requiredPermissionSet = new Set(requiredPermission);
-    const isHavePermisison = (user as IPayload).permission.every((item) =>
-      requiredPermissionSet.has(item),
+
+    const isHaveAllPermission = requiredPermission.every((perm) =>
+      user.permission.includes(perm),
     );
-    if (isHavePermisison) {
+    if (isHaveAllPermission) {
       return true;
     }
     return false;
