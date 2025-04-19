@@ -27,31 +27,58 @@ export class ChatStoreService {
     private readonly chatGateWay: ChatGateWay,
     private readonly cacheAppService: CacheAppService,
   ) {}
-  async createConversation(createConversationDTO: CreateConversationDTO) {
-    const { participants } = createConversationDTO;
-    const listUser = await this.userRepository.find({
-      where: {
-        id: In(participants),
-      },
+
+  async getOrCreateConversation(firstUser: string, secondUser: string) {
+    let isNew = false;
+    let conversation = await this.conversationModel.findOne({
+      participants: { $all: [firstUser, secondUser], $size: 2 },
     });
-    if (listUser.length !== participants.length) {
-      throw new CustomException(ErrorCode.USER_NOT_EXIST);
+
+    if (!conversation) {
+      const userSenderPromise = this.userRepository.findOneByOrFail({
+        id: firstUser,
+      });
+
+      const userReceiverPromise = this.userRepository.findOneByOrFail({
+        id: secondUser,
+      });
+
+      const [userSender, userReceivere] = await Promise.all([
+        userSenderPromise,
+        userReceiverPromise,
+      ]);
+
+      const newConversation = new this.conversationModel({
+        nameParticipants: [userSender.name, userReceivere.name],
+        participants: [userSender.id, userReceivere.id],
+      });
+      conversation = await newConversation.save();
+      isNew = true;
     }
-    const createdConversation = new this.conversationModel({
-      participants: participants,
-    });
-    return await createdConversation.save();
+
+    return {
+      _id: conversation._id,
+      participants: conversation.participants,
+      isNew,
+    };
   }
 
   async getAllConversationByIdUser(idUser: string, querry: IQuerryPage) {
-    const total = await this.conversationModel.countDocuments({
+    const filter = {
       participants: { $in: [idUser] },
-    });
+      lastMessage: {
+        $exists: true,
+        $ne: null,
+      },
+    };
+
+    const total = await this.conversationModel.countDocuments(filter);
     const listConversation = await this.conversationModel
-      .find({ participants: { $in: [idUser] } })
+      .find(filter)
       .limit(querry.limit)
       .skip((querry.page - 1) * querry.limit)
       .sort({ updatedAt: 'desc' })
+      .where()
       .lean();
 
     return { listConversation, total };
@@ -127,35 +154,6 @@ export class ChatStoreService {
     if (!conversation) {
       throw new CustomException(ErrorCode.CONVERSATION_IS_NOT_EXIST);
     }
-    return conversation;
-  }
-
-  private async getOrCreateConversation(sender: string, receiver: string) {
-    let conversation = await this.conversationModel.findOne({
-      participants: { $all: [sender, receiver], $size: 2 },
-    });
-
-    if (!conversation) {
-      const userSenderPromise = this.userRepository.findOneByOrFail({
-        id: sender,
-      });
-
-      const userReceiverPromise = this.userRepository.findOneByOrFail({
-        id: receiver,
-      });
-
-      const [userSender, userReceivere] = await Promise.all([
-        userSenderPromise,
-        userReceiverPromise,
-      ]);
-
-      const newConversation = new this.conversationModel({
-        nameParticipants: [userSender.name, userReceivere.name],
-        participants: [userSender.id, userReceivere.id],
-      });
-      conversation = await newConversation.save();
-    }
-
     return conversation;
   }
 }

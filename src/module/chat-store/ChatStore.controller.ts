@@ -19,7 +19,10 @@ export class ChatStoreController {
   @Post()
   @IsPublic()
   createConversation(@Body() createConversationDTO: CreateConversationDTO) {
-    return this.chatStoreSerive.createConversation(createConversationDTO);
+    return this.chatStoreSerive.getOrCreateConversation(
+      createConversationDTO.participants[0],
+      createConversationDTO.participants[1],
+    );
   }
 
   @Get('/:id')
