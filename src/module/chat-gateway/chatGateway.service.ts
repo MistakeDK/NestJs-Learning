@@ -45,21 +45,25 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() storeIdDTO: StoreIdUserDTO,
     @ConnectedSocket() client: Socket,
   ) {
-    console.log('storeIdDTO', storeIdDTO);
     this.users.set(storeIdDTO.id, client.id);
   }
 
   handleSendPrivateMessage(
     message: CreateMessageDTO,
-    idUsersReceive: string[],
+    idUsers: string[],
+    nameParticipants: string[],
+    idMessage: string,
   ) {
     const { sender } = message;
-    console.log('this.users', this.users);
-    idUsersReceive.forEach((item) => {
+    console.log(this.users);
+    idUsers.forEach((item) => {
       if (this.users.has(item) && item !== sender) {
-        this.server
-          .to(this.users.get(item) as string)
-          .emit('receiveMessage', message);
+        this.server.to(this.users.get(item) as string).emit('receiveMessage', {
+          ...message,
+          participants: idUsers,
+          nameParticipants: nameParticipants,
+          _id: idMessage,
+        });
       }
     });
   }
@@ -72,6 +76,7 @@ export class ChatGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(@ConnectedSocket() client: Socket) {
     this.users.forEach((socketId, idUser) => {
       if (socketId === client.id) {
+        console.log('id client has been disconnected', socketId);
         this.users.delete(idUser);
       }
     });

@@ -12,6 +12,7 @@ import { CreateConversationDTO } from './dto/createConversationDTO';
 import { IsPublic } from 'src/decorator/public.decorator';
 import { IQuerryPage, QuerryPagePipe } from 'src/pipe/querry-page.pipe';
 import { CreateMessageDTO } from './dto/createMessageDTO';
+import { IQuerryCursor, QuerryCursorPipe } from 'src/pipe/querry-cursor.pipe';
 
 @Controller('/chat')
 export class ChatStoreController {
@@ -36,7 +37,7 @@ export class ChatStoreController {
   @Get('/detail/:id')
   getDetailConversation(
     @Param('id') idConversation: string,
-    @Query(QuerryPagePipe) query: IQuerryPage,
+    @Query(QuerryCursorPipe) query: IQuerryCursor,
   ) {
     return this.chatStoreSerive.getDetailConversation(idConversation, query);
   }

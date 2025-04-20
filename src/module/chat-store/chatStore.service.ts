@@ -16,6 +16,7 @@ import { IQuerryPage } from 'src/pipe/querry-page.pipe';
 import { CreateMessageDTO } from './dto/createMessageDTO';
 import { formatCacheKey } from 'src/utils/commom';
 import { eKeyCache } from 'src/config/keyCache.enum';
+import { IQuerryCursor } from 'src/pipe/querry-cursor.pipe';
 
 @Injectable()
 export class ChatStoreService {
@@ -59,6 +60,7 @@ export class ChatStoreService {
     return {
       _id: conversation._id,
       participants: conversation.participants,
+      nameParticipants: conversation.nameParticipants,
       isNew,
     };
   }
@@ -78,29 +80,40 @@ export class ChatStoreService {
       .limit(querry.limit)
       .skip((querry.page - 1) * querry.limit)
       .sort({ updatedAt: 'desc' })
-      .where()
       .lean();
 
     return { listConversation, total };
   }
 
-  async getDetailConversation(idConversation: string, querry: IQuerryPage) {
+  async getDetailConversation(idConversation: string, querry: IQuerryCursor) {
+    const { limit, cursor } = querry;
+
+    const filter = {
+      conversationId: new Types.ObjectId(idConversation),
+    };
+    if (cursor) {
+      filter['createdAt'] = { $lt: new Date(cursor) };
+    }
     const messageDetail = await this.cacheAppService.getOrSet(
       formatCacheKey(eKeyCache.DETAIL_CONVERSATION, {
         conversationId: idConversation,
+        cursor: cursor ?? 'first',
       }),
       () => {
         return this.messageModel
-          .find({
-            conversationId: new Types.ObjectId(idConversation),
-          })
-          .sort({
-            createdAt: 'desc',
-          });
+          .find(filter)
+          .sort({ createdAt: 'desc' }) // newest → oldest
+          .limit(limit);
       },
       3,
     );
-    return messageDetail;
+    return {
+      messageConversation: messageDetail,
+      nextCursor:
+        messageDetail.length > 0
+          ? messageDetail[messageDetail.length - 1]['createdAt']
+          : null,
+    };
   }
 
   async sendMessage(createMessageDTO: CreateMessageDTO) {
@@ -139,11 +152,14 @@ export class ChatStoreService {
     this.chatGateWay.handleSendPrivateMessage(
       createMessageDTO,
       conversation.participants,
+      conversation.nameParticipants,
+      newMessage._id.toString(),
     );
     return {
-      _id: newMessage._id,
-      conversationId: conversation._id.toString(),
-      content: content,
+      ...createMessageDTO,
+      participants: conversation.participants,
+      nameParticipants: conversation.nameParticipants,
+      _id: newMessage._id.toString(),
     };
   }
 
