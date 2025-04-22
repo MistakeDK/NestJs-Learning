@@ -29,7 +29,7 @@ export class ChatStoreController {
   @Get('/:id')
   getConversationById(
     @Param('id') idUser: string,
-    @Query(QuerryPagePipe) querry: IQuerryPage,
+    @Query(QuerryCursorPipe) querry: IQuerryCursor,
   ) {
     return this.chatStoreSerive.getAllConversationByIdUser(idUser, querry);
   }

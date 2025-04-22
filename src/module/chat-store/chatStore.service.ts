@@ -65,7 +65,8 @@ export class ChatStoreService {
     };
   }
 
-  async getAllConversationByIdUser(idUser: string, querry: IQuerryPage) {
+  async getAllConversationByIdUser(idUser: string, querry: IQuerryCursor) {
+    const { cursor, limit } = querry;
     const filter = {
       participants: { $in: [idUser] },
       lastMessage: {
@@ -73,16 +74,23 @@ export class ChatStoreService {
         $ne: null,
       },
     };
+    if (cursor) {
+      filter['updatedAt'] = { $lt: new Date(cursor) };
+    }
 
-    const total = await this.conversationModel.countDocuments(filter);
     const listConversation = await this.conversationModel
       .find(filter)
-      .limit(querry.limit)
-      .skip((querry.page - 1) * querry.limit)
+      .limit(limit)
       .sort({ updatedAt: 'desc' })
       .lean();
 
-    return { listConversation, total };
+    return {
+      listConversation,
+      nextCursor:
+        listConversation.length > 0
+          ? listConversation[listConversation.length - 1]['updatedAt']
+          : null,
+    };
   }
 
   async getDetailConversation(idConversation: string, querry: IQuerryCursor) {
